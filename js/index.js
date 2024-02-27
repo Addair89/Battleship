@@ -79,8 +79,9 @@ function setShipSelected(evt) {
 function placeShip(evt) {
     if (messageBox) return;
     let selectedTileEl = evt.target;
-    if (!shipSelected) {
+    if (shipSelected.length <= 0) {
         gameMsgEl.textContent = "Place choose a ship first";
+        return;
     }
     let ship = playerShipData[shipSelected];
     //this lets me get the starting point to count spaces from
@@ -89,7 +90,7 @@ function placeShip(evt) {
     let startingElNorthSouth = Number(selectedTileId[3]);
     let startingElWestEast = Number(selectedTileId[1]);
     let endingElNorth = startingElNorthSouth + ship.size;
-    let endingElWest = startingElWestEast - ship.size;
+    let endingElWest = startingElWestEast - ship.size + 1;
     openRangeNorth(startingElNorthSouth, selectedTileId, ship, endingElNorth);
 
     let openSpacesNorth = openRangeNorth(
@@ -104,15 +105,46 @@ function placeShip(evt) {
         ship,
         endingElWest
     );
+    console.log(openSpacesWest);
     if (openSpacesNorth === -1) {
         selectedTileEl.style.backgroundColor = "green";
         highLightVerticleSpaces(selectedTileId, ship, true);
-        highlightWestSpaces(selectedTileId, ship, true);
-        showConfirmMessage(ship, selectedTileId);
     }
+    if (openSpacesWest === -1) {
+        selectedTileEl.style.backgroundColor = "green";
+        highlightWestSpaces(selectedTileId, ship, true);
+    }
+    showConfirmMessage(ship, selectedTileId, openSpacesWest, openSpacesNorth);
 }
 
-function openRangeWest() {}
+function openRangeWest(startingElWestEast, selectedTileId, ship, endingElWest) {
+    //script to count avaliable spaces to left(west).
+    //this checks if clicked spot is already taken
+    if (pBoard[startingElWestEast][selectedTileId[3]] === 1) {
+        gameMsgEl.innerText = `Not enough space for ${ship.name} there`;
+        return;
+    }
+    //this checks if ship is going to go off the board
+    if (endingElWest < 0) {
+        console.log("this ran open ranges west");
+        gameMsgEl.innerText = `Not enough space for ${ship.name} there`;
+        return;
+    }
+    //this checks for ships in east direction
+    let range = [];
+    while (startingElWestEast >= endingElWest) {
+        range.push(pBoard[startingElWestEast][selectedTileId[3]]);
+        startingElWestEast--;
+    }
+    console.log(range);
+    //if the range has a 1, that means a ship is there, cannot place new ship in that range
+    if (range.includes(1)) {
+        gameMsgEl.innerText = `Not enough space for ${ship.name} there`;
+        return;
+    }
+
+    return range.indexOf(1);
+}
 
 function openRangeNorth(
     startingElNorthSouth,
@@ -146,9 +178,12 @@ function openRangeNorth(
 function highlightWestSpaces(tileId, ship, add) {
     let shipSize = ship.size;
     let startingEl = add ? Number(tileId[1]) : Number(tileId[1]) - 1;
+    console.log(startingEl);
     let endingEl = startingEl - shipSize + 1;
+    console.log(endingEl);
     let color = add ? "green" : "white";
     while (startingEl >= endingEl) {
+        if (endingEl === -1) endingEl += 1;
         document.getElementById(
             `c${startingEl}r${tileId[3]}`
         ).style.backgroundColor = color;
@@ -176,7 +211,7 @@ function highLightVerticleSpaces(tileId, ship, add) {
     }
 }
 
-function showConfirmMessage(ship, tileId) {
+function showConfirmMessage(ship, tileId, openSpacesWest, openSpacesNorth) {
     console.log("Ran");
     if (messageBox) {
         let confirmMessageBox = document.createElement("div");
@@ -190,8 +225,12 @@ function showConfirmMessage(ship, tileId) {
         placeAgainBtn.innerText = "Cancel";
         confirmMessage.innerText = `Are you sure you want to place you ${ship.name} here?`;
         confirmMessageBox.appendChild(confirmMessage);
-        confirmMessageBox.appendChild(confirmBtnNorth);
-        confirmMessageBox.appendChild(confirmBtnWest);
+        if (openSpacesNorth === -1) {
+            confirmMessageBox.appendChild(confirmBtnNorth);
+        }
+        if (openSpacesWest) {
+            confirmMessageBox.appendChild(confirmBtnWest);
+        }
         confirmMessageBox.appendChild(placeAgainBtn);
         confirmMessageBox.classList.add("confirm-message-box");
         document.body.appendChild(confirmMessageBox);
@@ -243,6 +282,7 @@ function handleConfirmationBtn(ship, tileId, direction, confirmMessageBox) {
     if (direction === "west") {
         confirmWest(startingEl, ship, tileId, confirmMessageBox);
     }
+    shipSelected = "";
 
     console.log(pBoard);
     console.log(playerShipData);
@@ -250,26 +290,37 @@ function handleConfirmationBtn(ship, tileId, direction, confirmMessageBox) {
 
 function confirmWest(startingEl, ship, tileId, confirmMessageBox) {
     confirmMessageBox.remove();
-    console.log("ran confimrwest");
+    let shipArr = ship.name.split("");
     highLightVerticleSpaces(tileId, ship, false);
     let endingEl = startingEl - ship.size;
+    let count = 0;
     while (startingEl > endingEl) {
         pBoard[startingEl][tileId[3]] = 1;
         playerShipData[ship.name].location.push(`c${startingEl}r${tileId[3]}`);
+        let shipId = playerShipData[ship.name].location[count];
+        document.getElementById(shipId).classList.add("highlight");
+        document.getElementById(shipId).textContent = shipArr[0];
         startingEl--;
+        count++;
     }
 }
 
 function confirmNorth(startingEl, ship, tileId, confirmMessageBox) {
     confirmMessageBox.remove();
-
+    let shipArr = ship.name.split("");
     console.log("ran confimrnorth");
     highlightWestSpaces(tileId, ship, false);
     let endingEl = startingEl + ship.size;
+    let count = 0;
     while (startingEl < endingEl) {
         pBoard[tileId[1]][startingEl] = 1;
         playerShipData[ship.name].location.push(`c${tileId[1]}r${startingEl}`);
+        let shipId = playerShipData[ship.name].location[count];
+        document.getElementById(shipId).classList.add("highlight");
+        document.getElementById(shipId).classList.add("highlight");
+        document.getElementById(shipId).textContent = shipArr[0];
         startingEl++;
+        count++;
     }
 }
 

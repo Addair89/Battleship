@@ -27,6 +27,10 @@ button {
     display: none;
 }
 
+.highlight {
+    background-color: green !important;
+}
+
 .selected-ship {
     background: rgb(176, 176, 176);
     padding: 5px;
