@@ -86,3 +86,7 @@ main {
     display: flex;
     gap: 25px;
 }
+
+.hidden {
+    display: none;
+}

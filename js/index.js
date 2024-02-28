@@ -4,7 +4,9 @@
 let turn;
 let shipSelected;
 let playerShipData;
+let computerShipData;
 let shipsPlaced;
+let computerShipsPlaced;
 let pBoard;
 let cboard;
 let messageBox;
@@ -16,6 +18,7 @@ const gameMsgEl = document.querySelector(".game-message");
 const startGameBtn = document.querySelector(".start-game-btn");
 const ships = document.querySelectorAll(".ships > div");
 const playerGameboard = document.getElementById("player-game-board");
+const computerGameBoard = document.getElementById("computer-game-board");
 
 /*----- functions -----*/
 function init() {
@@ -23,7 +26,15 @@ function init() {
     shipSelected = null;
     messageBox = false;
     shipsPlaced = [];
+    computerShipsPlaced = [];
     playerShipData = {
+        aircraft: { name: "aircraft", size: 5, location: [] },
+        battleship: { name: "battleship", size: 4, location: [] },
+        submarine: { name: "submarine", size: 3, location: [] },
+        destroyer: { name: "destroyer", size: 3, location: [] },
+        cruiser: { name: "cruiser", size: 2, location: [] },
+    };
+    computerShipData = {
         aircraft: { name: "aircraft", size: 5, location: [] },
         battleship: { name: "battleship", size: 4, location: [] },
         submarine: { name: "submarine", size: 3, location: [] },
@@ -41,7 +52,7 @@ function render() {
     mainMsgEl.textContent =
         "Click the ship below, then choose a tile to place your ship";
     startGameBtn.classList.toggle("hidden");
-    document.getElementById("begin-game").classList.toggle("hidden");
+
     document
         .getElementById("begin-game")
         .addEventListener("click", handleBeginGame);
@@ -49,7 +60,7 @@ function render() {
 
 //----------------Setting the ship selcted----------//
 function setShipSelected(evt) {
-    console.log(evt);
+    // console.log(evt);
     if (messageBox) return;
     //remove background from all ships
     ships.forEach((ship) => {
@@ -64,7 +75,7 @@ function setShipSelected(evt) {
     } else if (evt.target.tagName === "DIV") {
         shipSelected = evt.target.id;
     }
-    console.log(shipSelected);
+    // console.log(shipSelected);
     //setting tyling class for selected ship
     if (!shipsPlaced.includes(shipSelected)) {
         if (evt.target.tagName === "P") {
@@ -86,7 +97,7 @@ function placeShip(evt) {
     let ship = playerShipData[shipSelected];
     //this lets me get the starting point to count spaces from
     let selectedTileId = evt.target.id.split("");
-    console.log(selectedTileId);
+    // console.log(selectedTileId);
     let startingElNorthSouth = Number(selectedTileId[3]);
     let startingElWestEast = Number(selectedTileId[1]);
     let endingElNorth = startingElNorthSouth + ship.size;
@@ -105,13 +116,13 @@ function placeShip(evt) {
         ship,
         endingElWest
     );
-    console.log(openSpacesWest);
+    // console.log(openSpacesWest);
     if (openSpacesNorth === -1) {
-        selectedTileEl.style.backgroundColor = "green";
+        // selectedTileEl.style.backgroundColor = "green";
         highLightVerticleSpaces(selectedTileId, ship, true);
     }
     if (openSpacesWest === -1) {
-        selectedTileEl.style.backgroundColor = "green";
+        // selectedTileEl.style.backgroundColor = "green";
         highlightWestSpaces(selectedTileId, ship, true);
     }
     showConfirmMessage(ship, selectedTileId, openSpacesWest, openSpacesNorth);
@@ -126,7 +137,7 @@ function openRangeWest(startingElWestEast, selectedTileId, ship, endingElWest) {
     }
     //this checks if ship is going to go off the board
     if (endingElWest < 0) {
-        console.log("this ran open ranges west");
+        // console.log("this ran open ranges west");
         gameMsgEl.innerText = `Not enough space for ${ship.name} there`;
         return;
     }
@@ -136,7 +147,7 @@ function openRangeWest(startingElWestEast, selectedTileId, ship, endingElWest) {
         range.push(pBoard[startingElWestEast][selectedTileId[3]]);
         startingElWestEast--;
     }
-    console.log(range);
+    // console.log(range);
     //if the range has a 1, that means a ship is there, cannot place new ship in that range
     if (range.includes(1)) {
         gameMsgEl.innerText = `Not enough space for ${ship.name} there`;
@@ -177,11 +188,11 @@ function openRangeNorth(
 
 function highlightWestSpaces(tileId, ship, add) {
     let shipSize = ship.size;
-    let startingEl = add ? Number(tileId[1]) : Number(tileId[1]) - 1;
-    console.log(startingEl);
-    let endingEl = startingEl - shipSize + 1;
-    console.log(endingEl);
+    let startingEl = Number(tileId[1]);
+    let endingEl = add ? startingEl - shipSize + 1 : startingEl + 1 - shipSize;
     let color = add ? "green" : "white";
+    console.log("Ship and endingEl :", ship, endingEl);
+    if (endingEl < -1) return;
     while (startingEl >= endingEl) {
         if (endingEl === -1) endingEl += 1;
         document.getElementById(
@@ -196,10 +207,18 @@ function highlightWestSpaces(tileId, ship, add) {
 
 function highLightVerticleSpaces(tileId, ship, add) {
     let shipSize = ship.size;
-    let startingEl = add ? Number(tileId[3]) : Number(tileId[3]) + 1;
+    let startingEl = Number(tileId[3]);
+    if (add === false) {
+        console.log("Starting el: ", startingEl);
+    }
     let endingEl = startingEl + shipSize;
+    if (add === false) {
+        console.log("ending el :", endingEl);
+    }
     let color = add ? "green" : "white";
+    if (startingEl + shipSize > 10) return;
     while (startingEl < endingEl) {
+        console.log(endingEl);
         document.getElementById(
             `c${tileId[1]}r${startingEl}`
         ).style.backgroundColor = color;
@@ -249,8 +268,8 @@ function showConfirmMessage(ship, tileId, openSpacesWest, openSpacesNorth) {
 
 function handleCancelBtn(confirmMessageBox, tileId, ship) {
     confirmMessageBox.remove();
-    highLightVerticleSpaces(tileId, ship, false);
     highlightWestSpaces(tileId, ship, false);
+    highLightVerticleSpaces(tileId, ship, false);
     messageBox = false;
 }
 
@@ -303,6 +322,10 @@ function confirmWest(startingEl, ship, tileId, confirmMessageBox) {
         startingEl--;
         count++;
     }
+    if (shipsPlaced.length === 5) {
+        console.log("all ships placed");
+        document.getElementById("begin-game").classList.toggle("hidden");
+    }
 }
 
 function confirmNorth(startingEl, ship, tileId, confirmMessageBox) {
@@ -322,15 +345,160 @@ function confirmNorth(startingEl, ship, tileId, confirmMessageBox) {
         startingEl++;
         count++;
     }
+
+    if (shipsPlaced.length === 5) {
+        console.log("all ships placed");
+        document.getElementById("begin-game").classList.toggle("hidden");
+    }
 }
 
 function handleBeginGame() {
-    if (shipsPlaced.length !== 5) {
-        console.log(shipsPlaced);
-        gameMsgEl.textContent = "Place All ships before beginning game!!!";
-        return;
+    playerGameboard.classList.toggle("hidden");
+    document.getElementById("begin-game").classList.toggle("hidden");
+    document.getElementById("ships-to-place").classList.toggle("hidden");
+    console.log(computerGameBoard);
+    computerRandomShipPlacement();
+}
+
+function computerRandomShipPlacement() {
+    let computerShipsCopy = {
+        ...computerShipData,
+    };
+    let direction;
+    while (Object.keys(computerShipsCopy).length > 0) {
+        for (ship in computerShipsCopy) {
+            console.log(ship);
+            let col = Math.floor(Math.random() * 9) + 1;
+            let row = Math.floor(Math.random() * 9) + 1;
+            let startingCell = `cc${col}r${row}`;
+            let spacesNorth = checkComputerSpacesNorth(ship, startingCell);
+            let spacesWest = checkComputerSpacesWest(ship, startingCell);
+            if (spacesNorth || spacesWest) {
+                direction = decideComputerShipDirection(
+                    spacesNorth,
+                    spacesWest
+                );
+                delete computerShipsCopy[ship];
+                console.log(direction, ship);
+                placeComputerShip(ship, startingCell, direction);
+            }
+            console.log(computerShipsCopy);
+            console.log(computerShipData);
+        }
     }
-    console.log("Begging Game!");
+}
+
+function decideComputerShipDirection(spacesNorth, spacesWest) {
+    //1 will equal north and 2 will equal West
+    let direction;
+    //if both are 1 then pick a random direction
+    if (spacesNorth && spacesWest) {
+        let num = Math.floor(Math.random() * (3 - 1) + 1);
+        direction = num;
+    }
+    //if only one is 1 then go that direction
+    if (spacesNorth && spacesWest === -1) {
+        direction = 1;
+    } else if (spacesNorth === -1 && spacesWest) {
+        direction = 2;
+    }
+    return direction;
+}
+function checkComputerSpacesWest(ship, startingCell) {
+    let shipSize = computerShipData[ship].size;
+    let startingCellArr = startingCell.split("");
+    let row = Number(startingCellArr[4]);
+    let col = Number(startingCellArr[2]);
+    let count = col;
+    let avaliableSpaces;
+    //Checks if board length can fit ship to left
+    if (startingCellArr[2] - shipSize - 1 < 0) {
+        console.log("ship is too long to go left");
+        avaliableSpaces = -1;
+    }
+    //check if board cells contain ship already left
+    while (count > shipSize) {
+        if (cBoard[count][row] === 1) {
+            avaliableSpaces = -1;
+            break;
+        }
+        avaliableSpaces = 1;
+        count--;
+    }
+    return avaliableSpaces;
+}
+
+function checkComputerSpacesNorth(ship, startingCell) {
+    let shipSize = computerShipData[ship].size;
+    let startingCellArr = startingCell.split("");
+    let col = Number(startingCellArr[2]);
+    let row = Number(startingCellArr[4]);
+    let count = 0;
+    let avaliableSpaces;
+    console.log(
+        "Checking North :",
+        computerShipData[ship].name,
+        shipSize,
+        "Row :",
+        row,
+        "Col :",
+        col
+    );
+    //checks if board length can fit ship up
+    if (row + shipSize - 1 > cBoard[row].length - 1) {
+        console.log("ship is too long to go up");
+        avaliableSpaces = -1;
+        return avaliableSpaces;
+    }
+    //check if board cells contain ship already up
+    while (count < shipSize) {
+        if (cBoard[col][row + count] === 1) {
+            avaliableSpaces = -1;
+            break;
+        }
+        console.log(
+            "---------------------------------",
+            cBoard[col],
+            row + count
+        );
+        avaliableSpaces = 1;
+        count++;
+    }
+    return avaliableSpaces;
+}
+
+function placeComputerShip(ship, startingCell, direction) {
+    //direction: 1 means north and 2 means west. will need to add the value of one in the cboard arrays, and the values of the cells in the computerShipsData object.
+
+    let row = Number(startingCell[4]);
+    let col = Number(startingCell[2]);
+    console.log(computerShipData[ship].size);
+    console.log(computerShipData[ship].name);
+    console.log(computerShipData[ship].location);
+    console.log(row);
+    console.log(col);
+    console.log("DIRECTION___________________", direction);
+
+    if (direction === 1) {
+        let count = 0;
+        while (count < computerShipData[ship].size) {
+            cBoard[col][row + count] = 1;
+            computerShipData[ship].location.push(`c${col}r${row + count}`);
+            console.log(cBoard);
+            count++;
+            console.log(computerShipData);
+        }
+    }
+    if (direction === 2) {
+        let count = 0;
+        while (computerShipData[ship].size > count) {
+            cBoard[col - count][row] = 1;
+            computerShipData[ship].location.push(`c${col - count}r${row}`);
+            console.log(cBoard);
+            count++;
+            console.log(computerShipData);
+        }
+    }
 }
 
 /*----- event listeners -----*/
