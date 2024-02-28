@@ -19,6 +19,7 @@ const startGameBtn = document.querySelector(".start-game-btn");
 const ships = document.querySelectorAll(".ships > div");
 const playerGameboard = document.getElementById("player-game-board");
 const computerGameBoard = document.getElementById("computer-game-board");
+const shootingMsg = document.querySelector(".ships-header");
 
 /*----- functions -----*/
 function init() {
@@ -325,6 +326,7 @@ function confirmWest(startingEl, ship, tileId, confirmMessageBox) {
     if (shipsPlaced.length === 5) {
         console.log("all ships placed");
         document.getElementById("begin-game").classList.toggle("hidden");
+        shootingMsg.textContent = "";
     }
 }
 
@@ -349,15 +351,20 @@ function confirmNorth(startingEl, ship, tileId, confirmMessageBox) {
     if (shipsPlaced.length === 5) {
         console.log("all ships placed");
         document.getElementById("begin-game").classList.toggle("hidden");
+        shootingMsg.textContent = "";
     }
 }
 
 function handleBeginGame() {
-    playerGameboard.classList.toggle("hidden");
     document.getElementById("begin-game").classList.toggle("hidden");
     document.getElementById("ships-to-place").classList.toggle("hidden");
-    console.log(computerGameBoard);
     computerRandomShipPlacement();
+    mainMsgEl.textContent = "Time to start shooting!!!!";
+    gameMsgEl.textContent = "Its your turn, good luck sailor!";
+    shootingMsg.textContent = "";
+    //1 equals player -1 equals computer
+    turn = 1;
+    startShooting(turn);
 }
 
 function computerRandomShipPlacement() {
@@ -373,7 +380,7 @@ function computerRandomShipPlacement() {
             let startingCell = `cc${col}r${row}`;
             let spacesNorth = checkComputerSpacesNorth(ship, startingCell);
             let spacesWest = checkComputerSpacesWest(ship, startingCell);
-            if (spacesNorth || spacesWest) {
+            if (spacesNorth === 1 || spacesWest === 1) {
                 direction = decideComputerShipDirection(
                     spacesNorth,
                     spacesWest
@@ -472,8 +479,9 @@ function placeComputerShip(ship, startingCell, direction) {
 
     let row = Number(startingCell[4]);
     let col = Number(startingCell[2]);
+    let shipInitial = computerShipData[ship].name.split("")[0];
     console.log(computerShipData[ship].size);
-    console.log(computerShipData[ship].name);
+    console.log(computerShipData[ship].name.split("")[0]);
     console.log(computerShipData[ship].location);
     console.log(row);
     console.log(col);
@@ -483,8 +491,13 @@ function placeComputerShip(ship, startingCell, direction) {
         let count = 0;
         while (count < computerShipData[ship].size) {
             cBoard[col][row + count] = 1;
-            computerShipData[ship].location.push(`c${col}r${row + count}`);
-            console.log(cBoard);
+            computerShipData[ship].location.push(`cc${col}r${row + count}`);
+            document.getElementById(
+                `cc${col}r${row + count}`
+            ).style.background = "green";
+            document.getElementById(
+                `cc${col}r${row + count}`
+            ).textContent = shipInitial;
             count++;
             console.log(computerShipData);
         }
@@ -493,12 +506,102 @@ function placeComputerShip(ship, startingCell, direction) {
         let count = 0;
         while (computerShipData[ship].size > count) {
             cBoard[col - count][row] = 1;
-            computerShipData[ship].location.push(`c${col - count}r${row}`);
-            console.log(cBoard);
+            computerShipData[ship].location.push(`cc${col - count}r${row}`);
+            document.getElementById(
+                `cc${col - count}r${row}`
+            ).style.background = "green";
+            document.getElementById(
+                `cc${col - count}r${row}`
+            ).textContent = shipInitial;
             count++;
             console.log(computerShipData);
         }
     }
+}
+
+function startShooting(turn) {
+    let winner = checkForWiner();
+    console.log(winner);
+    console.log("-----------Current Turn----------", turn);
+    if (turn) {
+        playerGameboard.classList.add("hidden");
+        computerGameBoard.classList.remove("hidden");
+        computerGameBoard.addEventListener("click", handlePlayerShot);
+    }
+    if (turn === -1) {
+        computerGameBoard.classList.add("hidden");
+        playerGameboard.classList.remove("hidden");
+        handleComputerShot();
+    }
+}
+
+function checkForWiner() {
+    let playerWin = [];
+    let computerWin = [];
+    cBoard.forEach((el) => {
+        el.forEach((el) => {
+            if (el === 1) playerWin.push(el);
+        });
+    });
+    pBoard.forEach((el) => {
+        el.forEach((el) => {
+            if (el === 1) computerWin.push(el);
+        });
+    });
+    console.log(playerWin);
+    console.log(computerWin);
+}
+function handleComputerShot() {
+    console.log("handle computer shot running");
+    let timeLeft = 5;
+    let timer = setInterval(function() {
+        if (timeLeft <= 0) clearInterval(timer);
+        gameMsgEl.textContent = `Computer Shooting in - ${timeLeft}...`;
+        timeLeft--;
+    }, 1000);
+    // timer();
+    // setTimeout(function(){}, 3000)
+    setTimeout(function() {
+        turn = 1;
+        startShooting(turn);
+    }, 9000);
+}
+
+function handlePlayerShot(evt) {
+    if (evt.target.classList.length > 0) {
+        gameMsgEl.textContent = "Cant shoot there!!! Aim and fire again!!!";
+    }
+    let shot = evt.target.id;
+    let shotArr = shot.split("");
+    let hit = false;
+    let indexToRemove;
+    let elToStyle;
+
+    for (ship in computerShipData) {
+        elToStyle = document.getElementById(shot);
+        if (computerShipData[ship].location.includes(shot)) {
+            hit = true;
+            indexToRemove = computerShipData[ship].location.indexOf(shot);
+        }
+    }
+    if (hit) {
+        elToStyle.style.background = "red";
+        computerShipData[ship].location.splice(indexToRemove, 1);
+        cBoard[shotArr[2]][shotArr[4]] = 0;
+    }
+    if (!hit) {
+        elToStyle.style.background = "gray";
+    }
+    let timeLeft = 5;
+    let timer = setInterval(function() {
+        if (timeLeft <= 0) {
+            turn = -1;
+            clearInterval(timer);
+            startShooting(turn);
+        }
+        gameMsgEl.textContent = `Computer's turn in - ${timeLeft}...`;
+        timeLeft--;
+    }, 1000);
 }
 
 /*----- event listeners -----*/
