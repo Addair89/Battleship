@@ -7,8 +7,13 @@ let playerShipData;
 let computerShipData;
 let shipsPlaced;
 let computerShipsPlaced;
+let lastHit;
+let nextShot;
+let prevShot;
+let prevShotCount;
+let avaliableChoices;
 let pBoard;
-let cboard;
+let cBoard;
 let messageBox;
 
 /*----- cached element references -----*/
@@ -16,6 +21,8 @@ const mainEl = document.querySelector("#game");
 const mainMsgEl = document.querySelector(".main-message");
 const gameMsgEl = document.querySelector(".game-message");
 const startGameBtn = document.querySelector(".start-game-btn");
+const playerBoardAnimatedCells = document.querySelectorAll(".animate");
+const computerBoardAnimatedCells = document.querySelectorAll(".animate-c");
 const ships = document.querySelectorAll(".ships > div");
 const playerGameboard = document.getElementById("player-game-board");
 const computerGameBoard = document.getElementById("computer-game-board");
@@ -25,9 +32,14 @@ const shootingMsg = document.querySelector(".ships-header");
 function init() {
     turn = null;
     shipSelected = null;
+    prevShotCount = 4;
     messageBox = false;
+    avaliableChoices = [];
     shipsPlaced = [];
     computerShipsPlaced = [];
+    prevHit = "";
+    nextHit = "";
+    lastHit = "";
     playerShipData = {
         aircraft: { name: "aircraft", size: 5, location: [] },
         battleship: { name: "battleship", size: 4, location: [] },
@@ -48,15 +60,32 @@ function init() {
 }
 //----------------Rendering the board---------------//
 function render() {
-    mainEl.style.visibility = "visible";
     gameMsgEl.textContent = "Place your ships. Then hit Begin";
     mainMsgEl.textContent =
         "Click the ship below, then choose a tile to place your ship";
     startGameBtn.classList.toggle("hidden");
-
+    document.querySelector("#ships-to-place").classList.toggle("hidden");
+    playerBoardAnimatedCells.forEach((el) => {
+        el.classList.remove("flashing-v2");
+        el.classList.remove("flashing-v1");
+    });
+    document.querySelector(".your-board").classList.remove("hidden");
     document
         .getElementById("begin-game")
         .addEventListener("click", handleBeginGame);
+    createComputerAvailableChoices();
+    mainEl.classList.remove("hidden");
+    mainEl.classList.add("show-right");
+}
+
+function createComputerAvailableChoices() {
+    for (i = 0; i < 10; i++) {
+        for (j = 0; j < 10; j++) {
+            let stringToPush = `c${i}r${j}`;
+            avaliableChoices.push(stringToPush);
+        }
+    }
+    console.log(avaliableChoices);
 }
 
 //----------------Setting the ship selcted----------//
@@ -356,7 +385,11 @@ function confirmNorth(startingEl, ship, tileId, confirmMessageBox) {
 }
 
 function handleBeginGame() {
-    document.getElementById("begin-game").classList.toggle("hidden");
+    document.getElementById("begin-game").classList.add("hide-left");
+    setTimeout(() => {
+        document.getElementById("begin-game").classList.toggle("hidden");
+    }, 500);
+
     document.getElementById("ships-to-place").classList.toggle("hidden");
     computerRandomShipPlacement();
     mainMsgEl.textContent = "Time to start shooting!!!!";
@@ -480,12 +513,6 @@ function placeComputerShip(ship, startingCell, direction) {
     let row = Number(startingCell[4]);
     let col = Number(startingCell[2]);
     let shipInitial = computerShipData[ship].name.split("")[0];
-    console.log(computerShipData[ship].size);
-    console.log(computerShipData[ship].name.split("")[0]);
-    console.log(computerShipData[ship].location);
-    console.log(row);
-    console.log(col);
-    console.log("DIRECTION___________________", direction);
 
     if (direction === 1) {
         let count = 0;
@@ -494,7 +521,7 @@ function placeComputerShip(ship, startingCell, direction) {
             computerShipData[ship].location.push(`cc${col}r${row + count}`);
             document.getElementById(
                 `cc${col}r${row + count}`
-            ).style.background = "green";
+            ).style.background = "white";
             document.getElementById(
                 `cc${col}r${row + count}`
             ).textContent = shipInitial;
@@ -509,7 +536,7 @@ function placeComputerShip(ship, startingCell, direction) {
             computerShipData[ship].location.push(`cc${col - count}r${row}`);
             document.getElementById(
                 `cc${col - count}r${row}`
-            ).style.background = "green";
+            ).style.background = "white";
             document.getElementById(
                 `cc${col - count}r${row}`
             ).textContent = shipInitial;
@@ -521,16 +548,35 @@ function placeComputerShip(ship, startingCell, direction) {
 
 function startShooting(turn) {
     let winner = checkForWiner();
+    if (winner === 1 || winner === -1) {
+        return displayWinnerEndGame(winner);
+    }
     console.log(winner);
+    document.querySelector(".your-board").classList.remove("margin-right");
     console.log("-----------Current Turn----------", turn);
     if (turn) {
+        computerBoardAnimatedCells.forEach((el) => {
+            el.classList.remove("flashing-v1");
+            el.classList.remove("flashing-v2");
+        });
+        document.querySelector(".your-board").textContent =
+            "Your turn to shoot";
+        mainMsgEl.textContent = "Save the world and kill the AI traitors!!!";
+        gameMsgEl.textContent = "Please dont miss...";
         playerGameboard.classList.add("hidden");
+        playerGameboard.classList.remove("show-right");
         computerGameBoard.classList.remove("hidden");
+        computerGameBoard.classList.add("show-right");
         computerGameBoard.addEventListener("click", handlePlayerShot);
     }
     if (turn === -1) {
+        document.querySelector(".your-board").textContent = "Computers Turn";
+        mainMsgEl.textContent = "All Humans must die!!!!";
+        gameMsgEl.textContent = "";
         computerGameBoard.classList.add("hidden");
+        computerGameBoard.classList.remove("show-right");
         playerGameboard.classList.remove("hidden");
+        playerGameboard.classList.add("show-right");
         handleComputerShot();
     }
 }
@@ -548,23 +594,75 @@ function checkForWiner() {
             if (el === 1) computerWin.push(el);
         });
     });
-    console.log(playerWin);
-    console.log(computerWin);
+    if (playerWin.length === 0) return 1;
+    if (computerWin.lenght === 0) return -1;
+    return "keep playing";
 }
+
 function handleComputerShot() {
-    console.log("handle computer shot running");
-    let timeLeft = 5;
+    let selection = Math.floor(Math.random() * avaliableChoices.length);
+    let timeLeft = 1;
+    let hit = false;
+    let indexToRemove;
+    let shipName;
+    let randomCell;
     let timer = setInterval(function() {
-        if (timeLeft <= 0) clearInterval(timer);
         gameMsgEl.textContent = `Computer Shooting in - ${timeLeft}...`;
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            randomCell = avaliableChoices[selection];
+            prevShot = randomCell;
+            let randomCellArr = randomCell.split("");
+            console.log("--------Computers Choice of shot cell", randomCell);
+            makeShot(randomCellArr);
+        }
         timeLeft--;
     }, 1000);
-    // timer();
-    // setTimeout(function(){}, 3000)
+
+    // calcNextShot(){
+    //     //will need to make nextshot equal prevHit, plus the prevshotcount
+    //     //4 goes up, 3 goes down, 2 goes left, 1 goes right
+    //     //next to check lastHit, set nextshot, if at 0 then set nextShot to empty and prevShotCount to 4
+    // }
+
+    function makeShot(cellArr) {
+        avaliableChoices.splice(selection, 1);
+        for (ship in playerShipData) {
+            if (playerShipData[ship].location.includes(randomCell)) {
+                shipName = ship;
+                hit = true;
+                indexToRemove = playerShipData[ship].location.indexOf(
+                    randomCell
+                );
+            }
+        }
+        if (hit) {
+            console.log("computer hit");
+            console.log("Index to remove :", indexToRemove);
+            console.log(
+                "Ship location in player shipdata",
+                playerShipData[shipName].location
+            );
+            lastHit = randomCell;
+            prevShotCount = prevShotCount;
+            console.log("-----Prev Hit----After hit", prevHit);
+            document.getElementById(randomCell).classList.add("hit");
+            playerShipData[shipName].location.splice(indexToRemove, 1);
+            pBoard[cellArr[1]][cellArr[3]] = 0;
+            gameMsgEl.textContent =
+                "Computer Hit. The time for humans is at an end";
+        }
+        if (!hit) {
+            if (prevShotCount === 1) prevHit = "";
+            document.getElementById(randomCell).style.backgroundColor = "gray";
+            gameMsgEl.textContent = "Computer Missed, must be a bug!";
+        }
+    }
+
     setTimeout(function() {
         turn = 1;
         startShooting(turn);
-    }, 9000);
+    }, 3000);
 }
 
 function handlePlayerShot(evt) {
@@ -576,23 +674,27 @@ function handlePlayerShot(evt) {
     let hit = false;
     let indexToRemove;
     let elToStyle;
+    let shipName;
 
     for (ship in computerShipData) {
         elToStyle = document.getElementById(shot);
         if (computerShipData[ship].location.includes(shot)) {
+            shipName = ship;
             hit = true;
             indexToRemove = computerShipData[ship].location.indexOf(shot);
         }
     }
     if (hit) {
         elToStyle.style.background = "red";
-        computerShipData[ship].location.splice(indexToRemove, 1);
+        computerShipData[shipName].location.splice(indexToRemove, 1);
         cBoard[shotArr[2]][shotArr[4]] = 0;
+        gameMsgEl.textContent = "Good hit sailor!! Kill the evil AI";
     }
     if (!hit) {
         elToStyle.style.background = "gray";
+        gameMsgEl.textContent = "If you keep missing, we will all die";
     }
-    let timeLeft = 5;
+    let timeLeft = 1;
     let timer = setInterval(function() {
         if (timeLeft <= 0) {
             turn = -1;
@@ -601,6 +703,33 @@ function handlePlayerShot(evt) {
         }
         gameMsgEl.textContent = `Computer's turn in - ${timeLeft}...`;
         timeLeft--;
+    }, 1000);
+}
+
+function displayWinnerEndGame(winner) {
+    let timeLeft = 2;
+    let timer = setInterval(function() {
+        timeLeft--;
+        if (timeLeft <= 0) clearInterval(timer);
+        mainEl.classList.add("hidden");
+        console.log(mainMsgEl.textContent);
+        console.log(gameMsgEl.textContent);
+        console.log(winner);
+        let winnerMsgBox = document.querySelector(".winner-msg-box");
+        let winnerMsg = document.querySelector(".winner-msg");
+        winnerMsgBox.classList.remove("hidden");
+        if (winner === 1) {
+            mainMsgEl.textContent =
+                "Thank Goodness You've Defeated The Evil AI";
+            gameMsgEl.textContent = "You Won!!!";
+            document.querySelector(".your-board").textContent = "Play Again?";
+            document
+                .querySelector(".your-board")
+                .classList.remove("margin-right");
+            console.log(mainMsgEl.textContent);
+            console.log(gameMsgEl.textContent);
+            console.log(winner);
+        }
     }, 1000);
 }
 
