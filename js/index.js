@@ -85,12 +85,10 @@ function createComputerAvailableChoices() {
             avaliableChoices.push(stringToPush);
         }
     }
-    console.log(avaliableChoices);
 }
 
 //----------------Setting the ship selcted----------//
 function setShipSelected(evt) {
-    // console.log(evt);
     if (messageBox) return;
     //remove background from all ships
     ships.forEach((ship) => {
@@ -105,7 +103,6 @@ function setShipSelected(evt) {
     } else if (evt.target.tagName === "DIV") {
         shipSelected = evt.target.id;
     }
-    // console.log(shipSelected);
     //setting tyling class for selected ship
     if (!shipsPlaced.includes(shipSelected)) {
         if (evt.target.tagName === "P") {
@@ -127,7 +124,6 @@ function placeShip(evt) {
     let ship = playerShipData[shipSelected];
     //this lets me get the starting point to count spaces from
     let selectedTileId = evt.target.id.split("");
-    // console.log(selectedTileId);
     let startingElNorthSouth = Number(selectedTileId[3]);
     let startingElWestEast = Number(selectedTileId[1]);
     let endingElNorth = startingElNorthSouth + ship.size;
@@ -146,13 +142,10 @@ function placeShip(evt) {
         ship,
         endingElWest
     );
-    // console.log(openSpacesWest);
     if (openSpacesNorth === -1) {
-        // selectedTileEl.style.backgroundColor = "green";
         highLightVerticleSpaces(selectedTileId, ship, true);
     }
     if (openSpacesWest === -1) {
-        // selectedTileEl.style.backgroundColor = "green";
         highlightWestSpaces(selectedTileId, ship, true);
     }
     showConfirmMessage(ship, selectedTileId, openSpacesWest, openSpacesNorth);
@@ -167,7 +160,6 @@ function openRangeWest(startingElWestEast, selectedTileId, ship, endingElWest) {
     }
     //this checks if ship is going to go off the board
     if (endingElWest < 0) {
-        // console.log("this ran open ranges west");
         gameMsgEl.innerText = `Not enough space for ${ship.name} there`;
         return;
     }
@@ -177,7 +169,6 @@ function openRangeWest(startingElWestEast, selectedTileId, ship, endingElWest) {
         range.push(pBoard[startingElWestEast][selectedTileId[3]]);
         startingElWestEast--;
     }
-    // console.log(range);
     //if the range has a 1, that means a ship is there, cannot place new ship in that range
     if (range.includes(1)) {
         gameMsgEl.innerText = `Not enough space for ${ship.name} there`;
@@ -221,7 +212,6 @@ function highlightWestSpaces(tileId, ship, add) {
     let startingEl = Number(tileId[1]);
     let endingEl = add ? startingEl - shipSize + 1 : startingEl + 1 - shipSize;
     let color = add ? "green" : "white";
-    console.log("Ship and endingEl :", ship, endingEl);
     if (endingEl < -1) return;
     while (startingEl >= endingEl) {
         if (endingEl === -1) endingEl += 1;
@@ -238,17 +228,10 @@ function highlightWestSpaces(tileId, ship, add) {
 function highLightVerticleSpaces(tileId, ship, add) {
     let shipSize = ship.size;
     let startingEl = Number(tileId[3]);
-    if (add === false) {
-        console.log("Starting el: ", startingEl);
-    }
     let endingEl = startingEl + shipSize;
-    if (add === false) {
-        console.log("ending el :", endingEl);
-    }
     let color = add ? "green" : "white";
     if (startingEl + shipSize > 10) return;
     while (startingEl < endingEl) {
-        console.log(endingEl);
         document.getElementById(
             `c${tileId[1]}r${startingEl}`
         ).style.backgroundColor = color;
@@ -261,7 +244,6 @@ function highLightVerticleSpaces(tileId, ship, add) {
 }
 
 function showConfirmMessage(ship, tileId, openSpacesWest, openSpacesNorth) {
-    console.log("Ran");
     if (messageBox) {
         let confirmMessageBox = document.createElement("div");
         let confirmMessage = document.createElement("p");
@@ -307,8 +289,6 @@ function handleConfirmationBtn(ship, tileId, direction, confirmMessageBox) {
     confirmMessageBox.classList.toggle("hidden");
     gameMsgEl.textContent = "Select another Ship to place";
     messageBox = false;
-    console.log(tileId);
-    console.log(direction);
     //remove ship option from dom if placed
     shipsPlaced.push(ship.name);
     ships.forEach((el) => {
@@ -324,7 +304,6 @@ function handleConfirmationBtn(ship, tileId, direction, confirmMessageBox) {
             : direction === "west"
             ? Number(tileId[1])
             : Number(tileId[3]);
-    console.log(startingEl);
     if (direction === "north") {
         confirmNorth(startingEl, ship, tileId, confirmMessageBox);
     }
@@ -332,9 +311,6 @@ function handleConfirmationBtn(ship, tileId, direction, confirmMessageBox) {
         confirmWest(startingEl, ship, tileId, confirmMessageBox);
     }
     shipSelected = "";
-
-    console.log(pBoard);
-    console.log(playerShipData);
 }
 
 function confirmWest(startingEl, ship, tileId, confirmMessageBox) {
@@ -353,7 +329,6 @@ function confirmWest(startingEl, ship, tileId, confirmMessageBox) {
         count++;
     }
     if (shipsPlaced.length === 5) {
-        console.log("all ships placed");
         document.getElementById("begin-game").classList.toggle("hidden");
         shootingMsg.textContent = "";
     }
@@ -362,7 +337,6 @@ function confirmWest(startingEl, ship, tileId, confirmMessageBox) {
 function confirmNorth(startingEl, ship, tileId, confirmMessageBox) {
     confirmMessageBox.remove();
     let shipArr = ship.name.split("");
-    console.log("ran confimrnorth");
     highlightWestSpaces(tileId, ship, false);
     let endingEl = startingEl + ship.size;
     let count = 0;
@@ -378,7 +352,6 @@ function confirmNorth(startingEl, ship, tileId, confirmMessageBox) {
     }
 
     if (shipsPlaced.length === 5) {
-        console.log("all ships placed");
         document.getElementById("begin-game").classList.toggle("hidden");
         shootingMsg.textContent = "";
     }
@@ -407,7 +380,6 @@ function computerRandomShipPlacement() {
     let direction;
     while (Object.keys(computerShipsCopy).length > 0) {
         for (ship in computerShipsCopy) {
-            console.log(ship);
             let col = Math.floor(Math.random() * 9) + 1;
             let row = Math.floor(Math.random() * 9) + 1;
             let startingCell = `cc${col}r${row}`;
@@ -419,11 +391,8 @@ function computerRandomShipPlacement() {
                     spacesWest
                 );
                 delete computerShipsCopy[ship];
-                console.log(direction, ship);
                 placeComputerShip(ship, startingCell, direction);
             }
-            console.log(computerShipsCopy);
-            console.log(computerShipData);
         }
     }
 }
@@ -453,7 +422,6 @@ function checkComputerSpacesWest(ship, startingCell) {
     let avaliableSpaces;
     //Checks if board length can fit ship to left
     if (startingCellArr[2] - shipSize - 1 < 0) {
-        console.log("ship is too long to go left");
         avaliableSpaces = -1;
     }
     //check if board cells contain ship already left
@@ -475,18 +443,8 @@ function checkComputerSpacesNorth(ship, startingCell) {
     let row = Number(startingCellArr[4]);
     let count = 0;
     let avaliableSpaces;
-    console.log(
-        "Checking North :",
-        computerShipData[ship].name,
-        shipSize,
-        "Row :",
-        row,
-        "Col :",
-        col
-    );
     //checks if board length can fit ship up
     if (row + shipSize - 1 > cBoard[row].length - 1) {
-        console.log("ship is too long to go up");
         avaliableSpaces = -1;
         return avaliableSpaces;
     }
@@ -496,11 +454,6 @@ function checkComputerSpacesNorth(ship, startingCell) {
             avaliableSpaces = -1;
             break;
         }
-        console.log(
-            "---------------------------------",
-            cBoard[col],
-            row + count
-        );
         avaliableSpaces = 1;
         count++;
     }
@@ -512,7 +465,6 @@ function placeComputerShip(ship, startingCell, direction) {
 
     let row = Number(startingCell[4]);
     let col = Number(startingCell[2]);
-    let shipInitial = computerShipData[ship].name.split("")[0];
 
     if (direction === 1) {
         let count = 0;
@@ -522,11 +474,7 @@ function placeComputerShip(ship, startingCell, direction) {
             document.getElementById(
                 `cc${col}r${row + count}`
             ).style.background = "white";
-            document.getElementById(
-                `cc${col}r${row + count}`
-            ).textContent = shipInitial;
             count++;
-            console.log(computerShipData);
         }
     }
     if (direction === 2) {
@@ -537,23 +485,20 @@ function placeComputerShip(ship, startingCell, direction) {
             document.getElementById(
                 `cc${col - count}r${row}`
             ).style.background = "white";
-            document.getElementById(
-                `cc${col - count}r${row}`
-            ).textContent = shipInitial;
+
             count++;
-            console.log(computerShipData);
         }
     }
 }
 
 function startShooting(turn) {
+    let computerShipsSunk = checkComputerShipsSunk();
+    let playerShipsSunk = checkPlayerShipsSunk();
     let winner = checkForWiner();
     if (winner === 1 || winner === -1) {
         return displayWinnerEndGame(winner);
     }
-    console.log(winner);
     document.querySelector(".your-board").classList.remove("margin-right");
-    console.log("-----------Current Turn----------", turn);
     if (turn) {
         computerBoardAnimatedCells.forEach((el) => {
             el.classList.remove("flashing-v1");
@@ -568,8 +513,36 @@ function startShooting(turn) {
         computerGameBoard.classList.remove("hidden");
         computerGameBoard.classList.add("show-right");
         computerGameBoard.addEventListener("click", handlePlayerShot);
+        if (computerShipsSunk.length > 0) {
+            document
+                .querySelector(".ships-to-place")
+                .classList.remove("hidden");
+
+            document.querySelector(
+                ".ships-to-place > .ships-header"
+            ).textContent = "You Sunk the Computers: ";
+
+            document.querySelector(
+                ".ships-to-place > .ships"
+            ).textContent = computerShipsSunk.join(" and ");
+        }
     }
     if (turn === -1) {
+        if (playerShipsSunk.length === 0) {
+            document.querySelector(".ships-to-place").classList.add("hidden");
+        } else {
+            document
+                .querySelector(".ships-to-place")
+                .classList.remove("hidden");
+
+            document.querySelector(
+                ".ships-to-place > .ships-header"
+            ).textContent = "You Sunk the Computer's: ";
+
+            document.querySelector(
+                ".ships-to-place > .ships"
+            ).textContent = playerShipsSunk.join(" and ");
+        }
         document.querySelector(".your-board").textContent = "Computers Turn";
         mainMsgEl.textContent = "All Humans must die!!!!";
         gameMsgEl.textContent = "";
@@ -579,6 +552,26 @@ function startShooting(turn) {
         playerGameboard.classList.add("show-right");
         handleComputerShot();
     }
+}
+
+function checkComputerShipsSunk() {
+    let sunkShips = [];
+    for (ship in computerShipData) {
+        if (computerShipData[ship].location.length === 0) {
+            sunkShips.push(ship);
+        }
+    }
+    return sunkShips;
+}
+
+function checkPlayerShipsSunk() {
+    let sunkShips = [];
+    for (ship in playerShipData) {
+        if (playerShipData[ship].location.length === 0) {
+            sunkShips.push(ship);
+        }
+    }
+    return sunkShips;
 }
 
 function checkForWiner() {
@@ -613,17 +606,10 @@ function handleComputerShot() {
             randomCell = avaliableChoices[selection];
             prevShot = randomCell;
             let randomCellArr = randomCell.split("");
-            console.log("--------Computers Choice of shot cell", randomCell);
             makeShot(randomCellArr);
         }
         timeLeft--;
     }, 1000);
-
-    // calcNextShot(){
-    //     //will need to make nextshot equal prevHit, plus the prevshotcount
-    //     //4 goes up, 3 goes down, 2 goes left, 1 goes right
-    //     //next to check lastHit, set nextshot, if at 0 then set nextShot to empty and prevShotCount to 4
-    // }
 
     function makeShot(cellArr) {
         avaliableChoices.splice(selection, 1);
@@ -637,15 +623,8 @@ function handleComputerShot() {
             }
         }
         if (hit) {
-            console.log("computer hit");
-            console.log("Index to remove :", indexToRemove);
-            console.log(
-                "Ship location in player shipdata",
-                playerShipData[shipName].location
-            );
             lastHit = randomCell;
             prevShotCount = prevShotCount;
-            console.log("-----Prev Hit----After hit", prevHit);
             document.getElementById(randomCell).classList.add("hit");
             playerShipData[shipName].location.splice(indexToRemove, 1);
             pBoard[cellArr[1]][cellArr[3]] = 0;
@@ -712,11 +691,7 @@ function displayWinnerEndGame(winner) {
         timeLeft--;
         if (timeLeft <= 0) clearInterval(timer);
         mainEl.classList.add("hidden");
-        console.log(mainMsgEl.textContent);
-        console.log(gameMsgEl.textContent);
-        console.log(winner);
         let winnerMsgBox = document.querySelector(".winner-msg-box");
-        let winnerMsg = document.querySelector(".winner-msg");
         winnerMsgBox.classList.remove("hidden");
         if (winner === 1) {
             mainMsgEl.textContent =
@@ -726,15 +701,11 @@ function displayWinnerEndGame(winner) {
             document
                 .querySelector(".your-board")
                 .classList.remove("margin-right");
-            console.log(mainMsgEl.textContent);
-            console.log(gameMsgEl.textContent);
-            console.log(winner);
         }
     }, 1000);
 }
 
 /*----- event listeners -----*/
 startGameBtn.addEventListener("click", init);
-console.log(ships);
 ships.forEach((ship) => ship.addEventListener("click", setShipSelected));
 playerGameboard.addEventListener("click", placeShip);
